@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123b2a">
+<title>DIP Switch Calculator</title>
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#17211b;background:#f3f6f4}
+*{box-sizing:border-box}
+body{margin:0;padding:18px;max-width:760px;margin-inline:auto}
+main{background:white;border-radius:18px;padding:20px;box-shadow:0 4px 22px #00000010}
+h1{font-size:24px;margin:0 0 6px}
+.sub{color:#66736b;margin:0 0 22px}
+label{display:block;font-weight:700;margin-bottom:8px}
+.inputrow{display:flex;gap:10px}
+input{font-size:24px;padding:12px;width:100%;min-width:0;border:1px solid #cbd5ce;border-radius:10px}
+button{border:0;border-radius:10px;padding:12px 15px;font-size:16px;font-weight:700;cursor:pointer;background:#176b42;color:white}
+button.secondary{background:#e8eee9;color:#203a2b}
+.result{text-align:center;padding:16px 0}
+.small{font-size:13px;color:#66736b}
+#total{font-size:38px;font-weight:800;color:#176b42}
+.switches{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;margin:12px 0 20px}
+.cell{text-align:center;min-width:0}
+.num{font-weight:700;margin-bottom:6px}
+.val{font-size:12px;color:#66736b;margin-top:6px}
+.rail{height:78px;border-radius:9px;background:#dfe5e1;display:flex;align-items:center;justify-content:center;padding:5px}
+.rail.on{background:#176b42}
+.toggle{width:100%;height:32px;border-radius:5px;background:white;color:#17211b;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+.onlist{font-size:20px;font-weight:800;line-height:1.5;overflow-wrap:anywhere}
+footer{font-size:12px;color:#66736b;line-height:1.5;margin-top:18px}
+@media(max-width:420px){body{padding:10px}.switches{gap:4px}.rail{height:65px}.toggle{font-size:10px}.num{font-size:13px}.val{font-size:10px}main{padding:14px}}
+</style>
+</head>
+<body>
+<main>
+<h1>DIP Switch Calculator</h1>
+<p class="sub">Nhập địa chỉ đầu dò để xem các DIP cần gạt ON/OFF.</p>
+<label for="address">Địa chỉ (0–255)</label>
+<div class="inputrow">
+<input id="address" type="number" min="0" max="255" step="1" value="60" inputmode="numeric">
+<button class="secondary" id="clear">Xóa</button>
+</div>
+<div class="result">
+<div class="small">ĐỊA CHỈ CẦN CÀI</div>
+<div id="total">60</div>
+<div class="small">SW màu xanh = ON · SW màu xám = OFF</div>
+</div>
+<div id="switches" class="switches"></div>
+<div class="small" style="font-weight:700;margin-bottom:6px">CÁC SW CẦN GẠT ON</div>
+<div id="onlist" class="onlist">SW3 + SW4 + SW5 + SW6</div>
+<button id="copy" style="width:100%;margin-top:16px">Sao chép cấu hình</button>
+<footer>Lưu ý: Quy ước giá trị 1, 2, 4, 8, 16, 32, 64, 128. Hãy xác nhận đúng sơ đồ DIP của model đầu dò trước khi cài đặt thiết bị thật.</footer>
+</main>
+<script>
+const vals=[1,2,4,8,16,32,64,128];
+const address=document.getElementById('address');
+const switches=document.getElementById('switches');
+const total=document.getElementById('total');
+const onlist=document.getElementById('onlist');
+let copyText='';
+function render(){
+ const raw=address.value.trim(), n=Number(raw);
+ if(raw===''||!Number.isInteger(n)||n<0||n>255){
+   total.textContent='—'; switches.innerHTML=''; onlist.textContent='Nhập số từ 0 đến 255';copyText='';return;
+ }
+ total.textContent=n;
+ switches.innerHTML='';
+ const on=[];
+ vals.forEach((v,i)=>{
+   const active=(n&v)!==0;
+   if(active)on.push('SW'+(i+1));
+   const cell=document.createElement('div');cell.className='cell';
+   cell.innerHTML='<div class="num">'+(i+1)+'</div><div class="rail '+(active?'on':'')+'"><div class="toggle">'+(active?'ON':'OFF')+'</div></div><div class="val">'+v+'</div>';
+   switches.appendChild(cell);
+ });
+ onlist.textContent=on.length?on.join(' + '):'Không có SW nào';
+ copyText='Địa chỉ: '+n+'\\n'+vals.map((v,i)=>'SW'+(i+1)+': '+((n&v)!==0?'ON':'OFF')).join('\\n')+'\\nCác SW ON: '+(on.join(', ')||'Không có');
+}
+address.addEventListener('input',render);
+document.getElementById('clear').addEventListener('click',()=>{address.value='';render();address.focus()});
+document.getElementById('copy').addEventListener('click',async()=>{
+ if(!copyText)return;
+ try{await navigator.clipboard.writeText(copyText);document.getElementById('copy').textContent='Đã sao chép!';setTimeout(()=>document.getElementById('copy').textContent='Sao chép cấu hình',1600)}
+ catch(e){const t=document.createElement('textarea');t.value=copyText;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();document.getElementById('copy').textContent='Đã sao chép!';setTimeout(()=>document.getElementById('copy').textContent='Sao chép cấu hình',1600)}
+});
+render();
+</script>
+</body>
+</html>
